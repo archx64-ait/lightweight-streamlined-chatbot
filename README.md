@@ -10,7 +10,7 @@ This group project for the AT82.05 Natural Language Understanding course is pres
 
 - Kaung Sithu (st124974)
 - Maung Maung Kyi Tha (st125214)
-- Rida Fatma (RIDA FATMA)
+- Rida Fatma (st125481)
 
 ## Data
 
