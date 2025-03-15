@@ -4,7 +4,9 @@ This group project for the AT82.05 Natural Language Understanding course is pres
 
 ## Group Name: archx64
 
-## Group
+## Group Description
+
+I'll know it when I see it.
 
 ## Team Members
 
