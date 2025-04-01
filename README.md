@@ -14,6 +14,14 @@ I'll know it when I see it.
 - Maung Maung Kyi Tha (st125214)
 - Rida Fatma (st125481)
 
+## Branches
+
+This repository currently have 3 branches.
+
+1. `main`: master branch of the repository.
+2. `models`: this is for the models and jupyter notebooks
+3. `dev`: development of the web applications
+
 ## Data
 
 The following Datasets related to questions and answers of IT support, helpdesk, and technical support and troubleshooting will be used to train and evaluate our model.
@@ -26,3 +34,12 @@ The following Datasets related to questions and answers of IT support, helpdesk,
   - It is a dataset of conversations between two crowdsourcing agents engaging in a dialog about a given topic. It consists of around 15,000 human-to-human role-playing dialogues totaling nearly 91,000 utterances.
 - ReDel Toolkit
   - A toolkit designed for dialog generation and evaluation to enable better benchmarking and analyzing quality of responses.
+
+```less
+[Goal Node]
+     |
+     |---[CPU]-----> (All alternatives)
+     |---[GPU]-----> (All alternatives)
+     |---[RAM]-----> (All alternatives)
+     |---[Portability]-----> (All alternatives)
+```
