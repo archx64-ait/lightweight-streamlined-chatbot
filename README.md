@@ -24,7 +24,12 @@ This repository currently have 3 branches.
 
 ## Dataset and Processing
 
-Ubuntu Dialog corpus will be used to train and evaluate our model. It contains roughly 1 million two-person conversations that provide real-world technical trouble shooting interactions. The conversations have an average of 8 turns each, with a minimum of 3 turns. All conversations are carried out in text form. The steps involved in preprocessing the data is descibed below:
+Ubuntu Dialog corpus will be used to train and evaluate our model. It contains roughly 1 million two-person conversations that provide real-world technical trouble shooting interactions. The conversations have an average of 8 turns each, with a minimum of 3 turns. All conversations are carried out in text form. The dataset can be accessed from these links.
+
+1. <https://www.kaggle.com/datasets/rtatman/ubuntu-dialogue-corpus>
+2. <https://dataset.cs.mcgill.ca/ubuntu-corpus-1.0/>
+
+The steps involved in preprocessing the data is descibed below:
 
 1. A column named `folder` is removed as it's not relevant
 2. Dialogue lengths are calculated by grouping messages based on `dialogueID`. The grouped dialogues are randomly shuffled to makeshare there is a representative sample.
