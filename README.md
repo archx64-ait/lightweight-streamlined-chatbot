@@ -2,11 +2,20 @@
 
 This group project for the AT82.05 Natural Language Understanding course is presented as a project proposal under the guidance of Dr. Chaklam Silpasuwanchai.
 
+The final project is a lightweight instruction-following chatbot trained on the Ubuntu Dialogue Corpus using LoRA-distilled LLMs like Qwen2 and GPT-Neo. Features confidence-based fallback, continuous feedback logging, and a modern chat UI built with Streamlit. The features include:
+
+- 🔁 Knowledge Distillation: Mistral-7B-Instruct distilled into GPT-Neo or Qwen2
+- 🧠 LoRA Fine-Tuning: Efficient training on 2080 Ti GPUs using PEFT
+- 🔍 Confidence Gating: Low-confidence responses escalate to human support
+- 🔄 Feedback Loop: Logs weak model responses for future retraining
+- 💬 Streamlit Chat UI: Markdown rendering + chat bubbles + model switcher
+- 📦 Multi-model ready: Easily plug in any HuggingFace causal LM with LoRA weights
+
 ## Group Name: archx64
 
 ## Group Description
 
-I'll know it when I see it.
+**_I'll know it when I see it_**
 
 ## Team Members
 
@@ -14,154 +23,113 @@ I'll know it when I see it.
 - Maung Maung Kyi Tha (<st125214@ait.asia>)
 - Rida Fatma (<st125481@ait.asia>)
 
+## Table of Contents
+
+- [Branches](#branches)
+- [Progress Report](#what-did-we-do-in-progress-report)
+- [Dataset](#dataset)
+- [Training Pipeline Overview](#training-pipeline-overview)
+- [Training Results](#training-results)
+- [Web Application](#web-application)
+- [How to run and some examples for testing](#how-to-run-and-some-examples-for-testing)
+- [Future Work](#future-work)
+- [Contribution](#contribution)
+
 ## Branches
 
 This repository currently have 3 branches.
 
 1. `main`: master branch of the repository.
-2. `models`: this is for the models and jupyter notebooks
-3. `dev`: development of the web applications
+2. `models`: this is mainly for the models and jupyter notebooks
 
-## Dataset and Processing
+### What did we do in progress report?
+
+[Click here](progress_report/README.md) to check what we have done in progress report.
+
+## Dataset
 
 Ubuntu Dialog corpus will be used to train and evaluate our model. It contains roughly 1 million two-person conversations that provide real-world technical trouble shooting interactions. The conversations have an average of 8 turns each, with a minimum of 3 turns. All conversations are carried out in text form. The dataset can be accessed from these links.
 
 1. <https://www.kaggle.com/datasets/rtatman/ubuntu-dialogue-corpus>
 2. <https://dataset.cs.mcgill.ca/ubuntu-corpus-1.0/>
 
-The steps involved in preprocessing the data is descibed below:
+## Training Pipeline Overview
 
-1. A column named `folder` is removed as it's not relevant
-2. Dialogue lengths are calculated by grouping messages based on `dialogueID`. The grouped dialogues are randomly shuffled to makeshare there is a representative sample.
+1. Distillation
+    - The training pipeline begins with a distillation phase, where the powerful `mistralai/Mistral-7B-Instruct-v0.3` model serves as the teacher to generate high-quality assistant responses based on prompts derived from the Ubuntu Dialogue Corpus. These responses are produced in batches of 1,000 and after 30 such runs, a total of 30,000 rows are merged and cleaned into a unified dataset `notebooks/sample/merged_distilled_dataset.csv` for downstream training.
+2. LoRA Fine-Tuning
+    - Next, the student models, either `Qwen2-0.5B-Instruct` or `GPT-Neo-1.3B`, are fine-tuned using the Parameter-Efficient Fine-Tuning (PEFT) framework with 4-bit quantization, significantly reducing GPU memory requirements. The training employs LoRA (Low-Rank Adaptation), which enables fast, lightweight adaptation of large language models on modest hardware such as the RTX 2080 Ti.
+3. Evaluation
+    - Finally, the pipeline includes an evaluation phase where the model's performance is tracked using key metrics such as evaluation loss and perplexity, measured on both validation and held-out test sets. This feedback supports iterative tuning and validates the effectiveness of the distillation and fine-tuning process.
 
-    ```python
-    dialogue_lengths = df.groupby('dialogueID').size().reset_index(name='num_rows')
-    dialogue_lengths = dialogue_lengths.sample(frac=1, random_state=69)
+## Training Results
+
+- This is the result of training `EleutherAI/gpt-neo-1.3B`. ![results from training EleutherAI/gpt-neo-1.3B](figures/training-gpt-neo.PNG)
+
+- Test results of GPT-Neo:
+
+    ```json
+    {
+        "eval_loss": 1.2192639112472534,
+        "eval_runtime": 110.3351,
+        "eval_samples_per_second": 40.785,
+        "eval_steps_per_second": 10.196,
+        "epoch": 2.9935238095238095
+    }
     ```
 
-3. Dialogues are selected sequentially until the cumulative number of rows reached the maximum threshold. Only 1000 rows are selected as a proof of concept and 100000 rows will be used for final training.
+- This is the result of training `Qwen/Qwen2-0.5B-Instruct`. ![results from training Qwen/Qwen2-0.5B-Instruct](figures/training-qwen2.PNG)
 
-    ```python
-    selected_ids = []
-    total = 0
-    max_rows = 1000
+- Test results of Qwen2:
 
-    for _, row in dialogue_lengths.iterrows():
-        if total + row['num_rows'] > max_rows:
-            break
-        selected_ids.append(row['dialogueID'])
-        total += row['num_rows']
+    ```json
+    {
+        "eval_loss": 1.2740108966827393,
+        "eval_runtime": 82.3415,
+        "eval_samples_per_second": 54.65,
+        "eval_steps_per_second": 13.663,
+        "epoch": 2.9935238095238095
+    }
     ```
-
-4. The final dataset is created by filtering the original dataset to include only the selected dialogues. The resulting subset is saved to a CSV file for later use. This reduces the time and computational resources as it eliminates the need for rerunning the processing code before training the model.
-
-    ```python
-    subset_df = df[df['dialogueID'].isin(selected_ids)]
-    subset_df.to_csv(f'sample/ubuntu_context_{max_rows}.csv')
-    ```
-
-## Training
-
-The notebook file for training is `notebooks/training_gpt-neo-1.3B.ipynb`
-
-### Dataset
-
-We used the dataset created from the proprocessing step. The dialogues are converted into formatted prompt-response pairs:
-
-```python
-grouped = df.groupby("dialogueID")
-conversations = []
-for _, group in grouped:
-    turns = group.sort_values("date")["text"].dropna().tolist()
-    for i in range(len(turns) - 1):
-        conversations.append({
-            "text": f"### Prompt:\n{turns[i]}\n### Response:\n{turns[i + 1]}"
-        })
-```
-
-After that, the dataset is splited into training 70%, validation 15% and test 15%.
-
-### Tokenization
-
-As most dialogues are short, prompts and reponses are tokenized with max length of 128 tokens, padding/truncating as necessary. Labels are prepared to match input IDs for causal language modeling.
-
-### Model Configuration
-
-GPT-Neo 1.3B is used as the base model. It is a transformer model designed using EleutherAI's replication of the GPT-3 architecture. GPT-Neo refers to the class of models, while 1.3B represents the number of parameters of this particular pre-trained model. It can be accessed from this link <https://huggingface.co/EleutherAI/gpt-neo-1.3B>
-
-LoRA (Low-Rank Adaptation) significantly reduces memory consumption and computational overhead during fine-tuning. By updating only a few low-rank matrices within the attention layers instead of the entire model, LoRA achieves similar or better performance with far fewer parameters, enabling efficient training on limited hardware resources. `BitsAndBytes` is used to perform 4-bit quantization (nf4 type), significantly reducing the memory footprint and enabling the training of large models like GPT-Neo on hardware with limited GPU memory. It maintains model performance by carefully quantizing weights, thus balancing efficiency with accuracy. `TrainingArguments` from Hugging Face Transformers define the configuration and hyperparameters for training the model. Key parameters used include:
-
-```python
-
-lora_config = LoraConfig(
-    r=8,
-    lora_alpha=32,
-    target_modules=["q_proj", "v_proj"],
-    lora_dropout=0.05,
-    bias="none",
-    task_type="CAUSAL_LM"
-)
-
-bnb_config = BitsAndBytesConfig(
-    load_in_4bit=True,
-    bnb_4bit_compute_dtype=torch.float16,
-    bnb_4bit_use_double_quant=True,
-    bnb_4bit_quant_type="nf4"
-)
-
-model = AutoModelForCausalLM.from_pretrained(
-    MODEL_NAME,
-    quantization_config=bnb_config,
-    device_map="auto",
-    torch_dtype=torch.float16
-)
-
-training_args = TrainingArguments(
-    output_dir="./models/gpt-neo",
-    per_device_train_batch_size=4,
-    per_device_eval_batch_size=4,
-    num_train_epochs=3,
-    fp16=False,
-    logging_dir="./logs",
-    logging_steps=100,
-    logging_strategy='steps',
-    save_strategy="epoch",
-    gradient_accumulation_steps=1,
-    evaluation_strategy="steps",
-    eval_steps=100,
-    report_to=None
-)
-```
-
-Training and validaton losses are tracked and visualized after training to monitor performance and convergence. ![Description](figures/train_valid_loss.PNG)
-
-### Results
-
-After training, the final model and tokenizer checkpoints saved uploaded and Google Drive. It can be accessed from this link. <https://drive.google.com/drive/folders/1TuFHKKmRJYEOV_haWLPWsAvOxi32x9m9?usp=sharing>
 
 ## Web Application
 
-The web applcation, Lightweight(LW) Streamlined Chatbot, leverages a GPT-Neo 1.3B model fine-tuned with Low-Rank Adaptation (LoRA) to provide accurate and context-aware responses. It has simple and intuitive user interface powered by Streamlit. Users can control the randomness of chatbot responses.
+The project includes a fully interactive Streamlit web app in `app/app.py` that enables users to chat with the fine-tuned model in a clean, conversational interface.
 
-### Running the application
+Key features include:
 
-Ensure you have the required dependencies installed:
+- 💬 Chat Interface includes markdown rendering and floating chat bubbles
+- 🔁 Model Selector to choose between GPT-Neo and Qwen2 student models
+- 🧠 Confidence Scoring: Automatically estimates response reliability using token-level softmax probabilities
+- 🚨 Human Escalation: If confidence is below a defined threshold, the system responds with a fallback message and logs the query for review
+- 📋 Retraining Feedback Loop: Low-confidence user inputs are saved to logs/low_confidence_log.csv, which can be later used for incremental retraining
+
+### How to run and some examples for testing
+
+Navigate to the `app` directory and execute the command.
 
 ```bash
-pip install streamlit transformers peft bitsandbytes torch
+streamlit run app.py
 ```
 
-Execute the following command to run the application. The web app will open in your default web browser.
+When you launch the application. This is the homepage you see. ![Start](figures/start.PNG)  
 
-```bash
-streamlit run app/streamlit_app.py
-```
+Users can select the model that they would like to use. ![Model Selector](figures/model_select.PNG)  
 
-### How to use?
+GPT-Neo does not hallucinate and give relevant responses. ![GPT-Neo-Prompt1](figures/gpt-neo-prompt1.PNG)  
 
-1. Enter your question or prompt into the provided input box.
-2. Use the slider to adjust the creativity (temperature) of the responses. Lower values produce more predictable answers, while higher values provide more creative, varied outputs.
-3. The chatbot maintains context by displaying previous interactions.
+Although confidence is high, Qwen2 hallucinates. ![Qwen2](figures/qwen2-prompt1.PNG)
+
+Since the confidence is low, it is saved to the log file and the conversation will be handed to human tech support. ![GPT-Neo-Prompt2](figures/gpt-neo-prompt2.PNG)
+
+We expected the responses the response to be low confidence or something related with Wine. However, it responded something different and it's somehow a little bit relevant. ![Qwen-Prompt2](figures/qwen2-prompt2.PNG)
+
+## Future Work
+
+- 📝 Human review (optional): Add interface or file for humans to manullay verify/edit responses
+- 🔁 Dataset curation: Filter & clean logs into format usable for finetuning.
+- 📦 Retraining pipeline: Feed curated logs into your LoRA distillation script. It was not possible to implement due to insufficient computational resources.
+🔄 Periodic retrain & reload. Automate model update and reload in the app. Unavailable due to the same reason as above and available time before submission.
 
 ## Contribution
 
