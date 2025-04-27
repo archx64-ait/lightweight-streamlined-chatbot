@@ -64,7 +64,7 @@ Ubuntu Dialog corpus will be used to train and evaluate our model. It contains r
 
 ## Training Results
 
-- This is the result of training `EleutherAI/gpt-neo-1.3B`. ![results from training EleutherAI/gpt-neo-1.3B](figures/training-gpt-neo.PNG)
+- This is the result of training `EleutherAI/gpt-neo-1.3B`. ![results from training EleutherAI/gpt-neo-1.3B](figures/training-gpt-neo.png)
 
 - Test results of GPT-Neo:
 
@@ -78,7 +78,7 @@ Ubuntu Dialog corpus will be used to train and evaluate our model. It contains r
     }
     ```
 
-- This is the result of training `Qwen/Qwen2-0.5B-Instruct`. ![results from training Qwen/Qwen2-0.5B-Instruct](figures/training-qwen2.PNG)
+- This is the result of training `Qwen/Qwen2-0.5B-Instruct`. ![results from training Qwen/Qwen2-0.5B-Instruct](figures/training-qwen2.png)
 
 - Test results of Qwen2:
 
@@ -106,23 +106,25 @@ Key features include:
 
 ### How to run and some examples for testing
 
-Navigate to the `app` directory and execute the command.
+1. Download our trained models from this link <https://drive.google.com/drive/folders/16pAhZ_E-j2it5dP-b24qkqQibyAqHWY6?usp=sharing>.
+2. Extract the `final-models.rar` and place the folders in `./notebooks/models/` directory.
+3. Navigate to the `app` directory and execute the command.
 
 ```bash
 streamlit run app.py
 ```
 
-When you launch the application. This is the homepage you see. ![Start](figures/start.PNG)  
+When you launch the application. This is the homepage you see. ![Start](figures/start.png)  
 
-Users can select the model that they would like to use. ![Model Selector](figures/model_select.PNG)  
+Users can select the model that they would like to use. ![Model Selector](figures/model_select.png)  
 
-GPT-Neo does not hallucinate and give relevant responses. ![GPT-Neo-Prompt1](figures/gpt-neo-prompt1.PNG)  
+GPT-Neo does not hallucinate and give relevant responses. ![GPT-Neo-Prompt1](figures/gpt-neo-prompt1.png)  
 
-Although confidence is high, Qwen2 hallucinates. ![Qwen2](figures/qwen2-prompt1.PNG)
+Although confidence is high, Qwen2 hallucinates. ![Qwen2](figures/qwen2-prompt1.png)
 
-Since the confidence is low, it is saved to the log file and the conversation will be handed to human tech support. ![GPT-Neo-Prompt2](figures/gpt-neo-prompt2.PNG)
+Since the confidence is low, it is saved to the log file and the conversation will be handed to human tech support. ![GPT-Neo-Prompt2](figures/gpt-neo-prompt2.png)
 
-We expected the responses the response to be low confidence or something related with Wine. However, it responded something different and it's somehow a little bit relevant. ![Qwen-Prompt2](figures/qwen2-prompt2.PNG)
+We expected the responses the response to be low confidence or something related with Wine. However, it responded something different and it's somehow a little bit relevant. ![Qwen-Prompt2](figures/qwen2-prompt2.png)
 
 ## Future Work
 
