@@ -32,6 +32,7 @@ The final project is a lightweight instruction-following chatbot trained on the 
 - [Training Results](#training-results)
 - [Web Application](#web-application)
 - [How to run and some examples for testing](#how-to-run-and-some-examples-for-testing)
+- [Demo Video](#demo-video)
 - [Future Work](#future-work)
 - [Contribution](#contribution)
 
@@ -125,6 +126,10 @@ Although confidence is high, Qwen2 hallucinates. ![Qwen2](figures/qwen2-prompt1.
 Since the confidence is low, it is saved to the log file and the conversation will be handed to human tech support. ![GPT-Neo-Prompt2](figures/gpt-neo-prompt2.png)
 
 We expected the responses the response to be low confidence or something related with Wine. However, it responded something different and it's somehow a little bit relevant. ![Qwen-Prompt2](figures/qwen2-prompt2.png)
+
+## Demo Video
+
+You can view the demo of the application from this link <https://youtu.be/ZFxyvzFKlIQ>
 
 ## Future Work
 
